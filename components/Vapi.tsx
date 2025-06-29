@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Phone, PhoneOff } from "lucide-react";
 import { Message } from "@/types";
+import { cn } from "@/lib/utils";
 
 type SavedMessage = {
   role: "user" | "system" | "assistant";
@@ -13,12 +14,12 @@ type SavedMessage = {
 
 enum CallStatus {
   ACTIVE = "active",
-  CONNECTING = "CONNECTING",
+  CONNECTING = "connecting",
   INACTIVE = "inactive",
   FINISHED = "finished",
 }
 
-const Vapi = () => {
+const Vapi = ({ userId, username }: { username: string; userId: string }) => {
   const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
   const [messages, setMessages] = useState<SavedMessage[]>([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -38,7 +39,7 @@ const Vapi = () => {
     };
 
     const onSpeechEnd = () => {
-      setIsSpeaking(true);
+      setIsSpeaking(false);
     };
 
     const onMessage = (message: Message) => {
@@ -75,12 +76,23 @@ const Vapi = () => {
     }
   }, [messages, isSpeaking]);
 
-  console.log(latestMessage);
+  const handleCall = async () => {
+    setCallStatus(CallStatus.CONNECTING);
 
-  const handleCall = () => {
-    setCallStatus(CallStatus.ACTIVE);
-
-    vapi.start(process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID);
+    if (callStatus !== "active") {
+      await vapi.start(
+        undefined,
+        undefined,
+        undefined,
+        process.env.NEXT_PUBLIC_VAPI_WORKFLOW,
+        {
+          variableValues: {
+            username: username,
+            userid: userId,
+          },
+        }
+      );
+    }
   };
 
   const handleCallEnd = () => {
@@ -96,7 +108,7 @@ const Vapi = () => {
           <div className="relative w-[130px] h-[130px] flex items-center justify-center">
             <span
               className={`absolute inline-flex h-3/4 w-3/4 rounded-full bg-primary-100 opacity-75 ${
-                callStatus === "active" ? "animate-ping" : ""
+                isSpeaking && "animate-ping"
               }`}
             />
             <div className="relative h-full w-full flex items-center justify-center bg-primary-100 rounded-full">
@@ -126,7 +138,13 @@ const Vapi = () => {
 
       {messages.length ? (
         <div className="cardWrapperBorder w-full h-[70px] mt-4">
-          <div className="cardWrapper !p-0 h-full flex justify-center items-center text-white text-2xl">
+          <div
+            key={latestMessage}
+            className={`cardWrapper !p-0 h-full flex justify-center items-center text-white text-2xl ${cn(
+              "transition-opacity duration-500 opacity-0",
+              "animate-fadeIn opacity-100"
+            )}`}
+          >
             {latestMessage}
           </div>
         </div>
@@ -146,7 +164,13 @@ const Vapi = () => {
           onClick={handleCall}
           className="flex items-center gap-2 py-4 px-8 bg-green-500 rounded-full text-white text-lg mx-auto mt-12 cursor-pointer"
         >
-          <Phone className="w-5 h-5" /> Call
+          {callStatus === "connecting" ? (
+            ". . ."
+          ) : (
+            <>
+              <Phone className="w-5 h-5" /> Call
+            </>
+          )}
         </button>
       )}
     </div>

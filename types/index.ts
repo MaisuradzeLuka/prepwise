@@ -5,6 +5,12 @@ export type UserCredentials = {
   password: string;
 };
 
+export type User = {
+  email: string;
+  id: string;
+  name: string;
+};
+
 enum MessageTypeEnum {
   TRANSCRIPT = "transcript",
   FUNCTION_CALL = "function-call",

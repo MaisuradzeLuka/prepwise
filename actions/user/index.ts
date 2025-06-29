@@ -1,7 +1,7 @@
 "use server";
 
 import { auth, db } from "@/firebase/admin";
-import { UserCredentials } from "@/types";
+import { User, UserCredentials } from "@/types";
 import { cookies } from "next/headers";
 
 const oneDay = 60 * 60 * 24;
@@ -105,7 +105,7 @@ export const getCurrentUser = async () => {
     if (!userRecords.exists) return null;
 
     return {
-      ...userRecords.data(),
+      ...(userRecords.data() as User),
       id: userRecords.id,
     };
   } catch (error: any) {
